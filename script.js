@@ -6,6 +6,10 @@ const interiorImage = document.querySelector('#interior-image');
 const wheelsButtonsSection = document.querySelector('#wheels-options');
 const performanceBtn = document.querySelector('#performance-btn');
 const totalPriceElement = document.querySelector('#total-price');
+const fullSelfDrivingCheckbox = document.querySelector('#self-driving-checkbox')
+const accessoriesCheckboxes = document.querySelectorAll('.accessory-checkbox');
+const downPaymentElement = document.querySelector('#down-payment')
+const monthlyPaymentElement = document.querySelector('#monthly-payment')
 
 
 let selectedColour = 'Stealth Grey'
@@ -16,7 +20,7 @@ const pricing = {
     'Performance Wheels': 2000,
     'Performance Package': 5000,
     'Full Self-Driving': 8000,
-    'Accessesories': {
+    'Accessories': {
         'Center Console Trays': 35,
         'Sunshade': 105,
         'All-weather Interior Liners': 225,
@@ -31,18 +35,47 @@ const selectedOptions = {
 
 const updateTotalPrice = () => {
     currentPrice = basePrice;
+
+    // Add prices for other selected options
     if (selectedOptions['Performance Wheels']) {
         currentPrice += pricing['Performance Wheels'];
     }
     if (selectedOptions['Performance Package']) {
-        console.log(pricing['Performance Package']);
-        currentPrice += pricing['Performance Package']
+        currentPrice += pricing['Performance Package'];
+    }
+    if (selectedOptions['Full Self-Driving']) {
+        currentPrice += pricing['Full Self-Driving'];
     }
 
-    totalPriceElement.textContent = `£${currentPrice.toLocaleString()}`;
+    // Add prices for selected accessories
+    accessoriesCheckboxes.forEach(checkbox => {
+        const accessoryLabel = checkbox.closest('.flex')
+            .querySelector('label span')
+            .textContent.trim();
 
+        const accessoryPrice = pricing['Accessories'][accessoryLabel];
+
+        if (checkbox.checked) {
+            currentPrice += accessoryPrice;
+        }
+    });
+
+    totalPriceElement.textContent = `£${currentPrice.toLocaleString()}`;
+    updatePaymentBreakdown()
 };
 
+const updatePaymentBreakdown = () => {
+    const downPayment = currentPrice * 0.1;
+    downPaymentElement.textContent = `£${downPayment.toLocaleString()}`
+
+    // calculating the monthly payment (60 months, 3% Interest Rate)
+    let interestRate = 3 / 100; // convert to decimal
+    let loanTermMonths = 60;
+    let monthlyInterestRate = interestRate / 12; // monthly interest rate
+    let monthlyPayment = currentPrice * (monthlyInterestRate * Math.pow((1 + monthlyInterestRate), loanTermMonths)) / (Math.pow((1 + monthlyInterestRate), loanTermMonths) - 1);
+    
+    monthlyPaymentElement.textContent = `£${monthlyPayment.toFixed(2).toLocaleString()}`
+}
 
 // handles the topbar visibility
 function hideTopbarWhenScrolled() {
@@ -123,13 +156,25 @@ const handlePerformanceButtonClick = () => {
     const isSelected = performanceBtn.classList.toggle('bg-gray-700');
     performanceBtn.classList.toggle('text-white');
 
-    selectedOptions['Performance Wheels'] = isSelected;
+    selectedOptions['Performance Package'] = isSelected;
     updateTotalPrice();
 
 }
+
+const fullSelfDrivingBoxChecked = () => {
+    selectedOptions['Full Self-Driving'] = fullSelfDrivingCheckbox.checked;
+    updateTotalPrice();
+};
+
+accessoriesCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', () => updateTotalPrice())
+});
+
+updateTotalPrice()
 
 window.addEventListener('scroll', hideTopbarWhenScrolled);
 exteriorColourSelection.addEventListener('click', handlerColourButtonClick);
 interiorColourSelection.addEventListener('click', handlerColourButtonClick);
 wheelsButtonsSection.addEventListener('click', handleWheelButtonClick);
 performanceBtn.addEventListener('click', handlePerformanceButtonClick);
+fullSelfDrivingCheckbox.addEventListener('change', fullSelfDrivingBoxChecked);
